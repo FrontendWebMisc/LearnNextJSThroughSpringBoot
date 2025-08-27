@@ -1,65 +1,79 @@
-# Next.js Server Components Feature
+# Next.js Static Site Generation (SSG) Feature
 
-## Spring Boot Comparison
-In Spring Boot, all logic runs on the server by default:
+## Perfect for Spring Boot Developers Who Build Documentation & Reports!
+This is like generating static documentation or reports at build time in Spring Boot. SSG pre-renders pages with data, creating super-fast static HTML files.
+
+**Your Spring Boot Build-Time Generation:**
 ```java
-@RestController
-public class ProductController {
+// Maven/Gradle plugin that generates static docs
+@Component  
+public class DocumentationGenerator {
     
-    @Autowired
-    private ProductService productService;
-    
-    @GetMapping("/products")
-    public List<Product> getProducts() {
-        // This runs on the SERVER
-        // Can access database, file system, environment variables
-        List<Product> products = productService.getAllProducts();
-        return products; // Data sent to client
+    @EventListener(ContextRefreshedEvent.class)
+    public void generateStaticDocs() {
+        // Generate API documentation
+        List<Endpoint> endpoints = reflectionService.scanEndpoints();
+        String html = templateEngine.process("api-docs", endpoints);
+        Files.write(Paths.get("target/docs/api.html"), html.getBytes());
+        
+        // Generate user manuals  
+        List<Guide> guides = contentService.getAllGuides();
+        guides.forEach(guide -> {
+            String content = markdownProcessor.toHtml(guide.getContent());
+            Files.write(Paths.get("target/docs/" + guide.getId() + ".html"), 
+                       content.getBytes());
+        });
     }
 }
 ```
 
-In Next.js, **Server Components** work similarly - they run on the server:
+**Next.js Static Generation (same concept!):**
 ```typescript
-// This component runs on the SERVER (like Spring Boot controller)
-export default async function ProductsPage() {
-  // Server-side operations (like Spring Boot service layer)
-  const products = await fetch('http://api.example.com/products');
-  const data = await products.json();
-  
-  return <div>{/* Rendered HTML sent to client */}</div>;
+// This generates static HTML at BUILD TIME
+export async function generateStaticParams() {
+    // Like scanning your data at build time
+    const posts = await getBlogPosts();
+    return posts.map(post => ({ slug: post.slug }));
+}
+
+export default async function BlogPost({ params }: { params: { slug: string } }) {
+    // This runs at BUILD TIME, not request time
+    const post = await getBlogPostBySlug(params.slug);
+    
+    // Generated as static HTML file
+    return <div>{post.content}</div>;
 }
 ```
 
-## Key Concepts
+## Key Concepts for Spring Boot Developers
 
-### 1. Server vs Client Components
-- **Server Components** - Run on server (like Spring Boot controllers)
-- **Client Components** - Run in browser (JavaScript interactions)
-- **Default**: All components are Server Components
+### 1. Build-Time vs Runtime
+- **SSG** - Generate pages at build time (like Maven/Gradle build plugins)
+- **SSR** - Generate pages at request time (like your controllers)
+- **Static Export** - Pure HTML files (like generated documentation)
 
-### 2. Server Component Benefits
-- **Database Access** - Direct database queries (like @Repository)
-- **File System Access** - Read files, environment variables
-- **Security** - Sensitive operations stay on server
-- **Performance** - Less JavaScript sent to client
+### 2. Performance Benefits
+- **CDN-friendly** - Static files served from edge locations
+- **Lightning fast** - No server processing needed
+- **SEO optimized** - Crawlers get pre-rendered HTML
+- **Cost effective** - Host on any static file server
 
 ## Examples in This Branch
 
-1. **Database Simulation** - `/app/products/page.tsx` (like @Service)
-2. **File System Access** - `/app/blog/page.tsx` (reading markdown files)
-3. **Environment Variables** - `/app/config/page.tsx` (server secrets)
-4. **API Integration** - `/app/weather/page.tsx` (external APIs)
+1. **Blog System** - `/blog/[slug]` (Static blog posts like documentation)
+2. **Product Catalog** - `/catalog/[category]` (E-commerce pages)
+3. **Documentation** - `/docs/[section]` (API documentation generation)
+4. **Reports Dashboard** - `/reports` (Business intelligence reports)
 
 ## Getting Started
 
-Run the development server:
+Build static pages:
 ```bash
-npm run dev
+npm run build
 ```
 
-Visit these URLs to see Server Components:
-- http://localhost:3000/products - Database simulation
-- http://localhost:3000/blog - File system reading
-- http://localhost:3000/config - Environment variables
-- http://localhost:3000/weather - External API calls
+Visit these statically generated pages:
+- /blog/nextjs-vs-spring-boot - Blog post (static HTML)
+- /catalog/electronics - Product category (pre-rendered)
+- /docs/api-reference - Documentation (build-time generated)
+- /reports/sales-2024 - Business report (static dashboard)
