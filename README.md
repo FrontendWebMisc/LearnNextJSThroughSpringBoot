@@ -1,79 +1,104 @@
-# Next.js Static Site Generation (SSG) Feature
+# Next.js Middleware Feature
 
-## Perfect for Spring Boot Developers Who Build Documentation & Reports!
-This is like generating static documentation or reports at build time in Spring Boot. SSG pre-renders pages with data, creating super-fast static HTML files.
+## Spring Boot Developers: You Already Know This Pattern!
+This is exactly like **Spring Boot Interceptors** and **Servlet Filters**! Middleware runs before your route handlers to check authentication, log requests, and modify responses.
 
-**Your Spring Boot Build-Time Generation:**
+**Your Familiar Spring Boot Interceptor:**
 ```java
-// Maven/Gradle plugin that generates static docs
-@Component  
-public class DocumentationGenerator {
+@Component
+public class AuthInterceptor implements HandlerInterceptor {
     
-    @EventListener(ContextRefreshedEvent.class)
-    public void generateStaticDocs() {
-        // Generate API documentation
-        List<Endpoint> endpoints = reflectionService.scanEndpoints();
-        String html = templateEngine.process("api-docs", endpoints);
-        Files.write(Paths.get("target/docs/api.html"), html.getBytes());
+    @Override
+    public boolean preHandle(HttpServletRequest request, 
+                           HttpServletResponse response, 
+                           Object handler) throws Exception {
         
-        // Generate user manuals  
-        List<Guide> guides = contentService.getAllGuides();
-        guides.forEach(guide -> {
-            String content = markdownProcessor.toHtml(guide.getContent());
-            Files.write(Paths.get("target/docs/" + guide.getId() + ".html"), 
-                       content.getBytes());
-        });
+        // Check authentication before controller
+        String token = request.getHeader("Authorization");
+        if (!isValidToken(token)) {
+            response.setStatus(401);
+            return false; // Block request
+        }
+        
+        // Log request
+        logger.info("Request: {} {}", request.getMethod(), request.getRequestURI());
+        return true; // Continue to controller
     }
 }
 ```
 
-**Next.js Static Generation (same concept!):**
+**Next.js Middleware (same exact concept!):**
 ```typescript
-// This generates static HTML at BUILD TIME
-export async function generateStaticParams() {
-    // Like scanning your data at build time
-    const posts = await getBlogPosts();
-    return posts.map(post => ({ slug: post.slug }));
+import { NextRequest, NextResponse } from 'next/server'
+
+export function middleware(request: NextRequest) {
+    // Same logic as your Spring Boot interceptor!
+    
+    // Check authentication
+    const token = request.headers.get('authorization')
+    if (!isValidToken(token)) {
+        return new NextResponse('Unauthorized', { status: 401 })
+    }
+    
+    // Log request
+    console.log(`Request: ${request.method} ${request.url}`)
+    
+    // Continue to page/API route (like return true)
+    return NextResponse.next()
 }
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-    // This runs at BUILD TIME, not request time
-    const post = await getBlogPostBySlug(params.slug);
-    
-    // Generated as static HTML file
-    return <div>{post.content}</div>;
+export const config = {
+    matcher: ['/dashboard/:path*', '/api/admin/:path*']
 }
 ```
 
 ## Key Concepts for Spring Boot Developers
 
-### 1. Build-Time vs Runtime
-- **SSG** - Generate pages at build time (like Maven/Gradle build plugins)
-- **SSR** - Generate pages at request time (like your controllers)
-- **Static Export** - Pure HTML files (like generated documentation)
+### 1. Request Lifecycle (Same as Spring Boot!)
+- **Middleware** runs first (like `@Component` interceptor)
+- **Page/API Route** runs second (like `@RestController` method)
+- **Response** can be modified at each step
 
-### 2. Performance Benefits
-- **CDN-friendly** - Static files served from edge locations
-- **Lightning fast** - No server processing needed
-- **SEO optimized** - Crawlers get pre-rendered HTML
-- **Cost effective** - Host on any static file server
+### 2. Common Use Cases (Just Like Your Interceptors!)
+- **Authentication** - Check JWT tokens before protected routes
+- **Logging** - Log all requests with timing information
+- **Rate Limiting** - Block too many requests from same IP
+- **Redirects** - Send users to login page if not authenticated
+- **CORS Headers** - Add cross-origin headers to responses
+
+### 3. Middleware vs Spring Boot Filters
+| Next.js Middleware | Spring Boot Equivalent |
+|-------------------|------------------------|
+| `middleware.ts` | `@Component` Interceptor |
+| `NextRequest` | `HttpServletRequest` |
+| `NextResponse` | `HttpServletResponse` |
+| `matcher` config | `@RequestMapping` patterns |
 
 ## Examples in This Branch
 
-1. **Blog System** - `/blog/[slug]` (Static blog posts like documentation)
-2. **Product Catalog** - `/catalog/[category]` (E-commerce pages)
-3. **Documentation** - `/docs/[section]` (API documentation generation)
-4. **Reports Dashboard** - `/reports` (Business intelligence reports)
+1. **Authentication Middleware** - `/middleware.ts` (JWT token validation)
+2. **Logging Middleware** - Request/response logging with timing
+3. **Rate Limiting** - IP-based request throttling
+4. **Admin Protection** - Role-based access control
+5. **Redirect Middleware** - Conditional redirects based on user state
 
 ## Getting Started
 
-Build static pages:
+Run the development server:
 ```bash
-npm run build
+npm run dev
 ```
 
-Visit these statically generated pages:
-- /blog/nextjs-vs-spring-boot - Blog post (static HTML)
-- /catalog/electronics - Product category (pre-rendered)
-- /docs/api-reference - Documentation (build-time generated)
-- /reports/sales-2024 - Business report (static dashboard)
+Test these middleware-protected routes:
+- http://localhost:3000/dashboard - Requires authentication
+- http://localhost:3000/admin - Requires admin role  
+- http://localhost:3000/api/protected - API with rate limiting
+- http://localhost:3000/profile - Automatic redirects
+
+## Spring Boot Developer Tips
+
+1. **Think interceptors** - Middleware = `HandlerInterceptor.preHandle()`
+2. **Pattern matching** - `matcher` = `@RequestMapping` path patterns
+3. **Chain execution** - Multiple middleware = interceptor chain
+4. **Request modification** - Same as modifying `HttpServletRequest`
+5. **Early returns** - `return NextResponse` = `return false` in interceptor
