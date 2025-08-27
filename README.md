@@ -1,46 +1,55 @@
-# Next.js App Router Feature
+# Next.js Server Components Feature
 
 ## Spring Boot Comparison
-In Spring Boot, you use `@RequestMapping` and `@GetMapping` to define routes:
+In Spring Boot, all logic runs on the server by default:
 ```java
 @RestController
-public class UserController {
-    @GetMapping("/users")           // GET /users
-    @GetMapping("/users/{id}")      // GET /users/123
-    @GetMapping("/users/{id}/profile") // GET /users/123/profile
+public class ProductController {
+    
+    @Autowired
+    private ProductService productService;
+    
+    @GetMapping("/products")
+    public List<Product> getProducts() {
+        // This runs on the SERVER
+        // Can access database, file system, environment variables
+        List<Product> products = productService.getAllProducts();
+        return products; // Data sent to client
+    }
 }
 ```
 
-In Next.js App Router, routes are defined by **folder structure**:
-```
-app/
-  users/
-    page.tsx          // GET /users
-    [id]/
-      page.tsx        // GET /users/123
-      profile/
-        page.tsx      // GET /users/123/profile
+In Next.js, **Server Components** work similarly - they run on the server:
+```typescript
+// This component runs on the SERVER (like Spring Boot controller)
+export default async function ProductsPage() {
+  // Server-side operations (like Spring Boot service layer)
+  const products = await fetch('http://api.example.com/products');
+  const data = await products.json();
+  
+  return <div>{/* Rendered HTML sent to client */}</div>;
+}
 ```
 
 ## Key Concepts
 
-### 1. File-Based Routing
-- **Folder = Route segment**
-- **`page.tsx` = Route endpoint** (like @GetMapping method)
-- **`[param]` = Dynamic route** (like @PathVariable)
+### 1. Server vs Client Components
+- **Server Components** - Run on server (like Spring Boot controllers)
+- **Client Components** - Run in browser (JavaScript interactions)
+- **Default**: All components are Server Components
 
-### 2. Special Files
-- `page.tsx` - The actual page component (like Controller method)
-- `layout.tsx` - Wraps pages (like base template)
-- `loading.tsx` - Loading UI (like loading spinner)
-- `error.tsx` - Error handling (like @ExceptionHandler)
+### 2. Server Component Benefits
+- **Database Access** - Direct database queries (like @Repository)
+- **File System Access** - Read files, environment variables
+- **Security** - Sensitive operations stay on server
+- **Performance** - Less JavaScript sent to client
 
 ## Examples in This Branch
 
-1. **Basic Routes** - `/app/page.tsx`, `/app/about/page.tsx`
-2. **Dynamic Routes** - `/app/users/[id]/page.tsx`
-3. **Nested Layouts** - `/app/dashboard/layout.tsx`
-4. **Route Groups** - `/app/(marketing)/features/page.tsx`
+1. **Database Simulation** - `/app/products/page.tsx` (like @Service)
+2. **File System Access** - `/app/blog/page.tsx` (reading markdown files)
+3. **Environment Variables** - `/app/config/page.tsx` (server secrets)
+4. **API Integration** - `/app/weather/page.tsx` (external APIs)
 
 ## Getting Started
 
@@ -49,9 +58,8 @@ Run the development server:
 npm run dev
 ```
 
-Visit these URLs to see the examples:
-- http://localhost:3000 - Home page
-- http://localhost:3000/about - About page  
-- http://localhost:3000/users/123 - Dynamic user page
-- http://localhost:3000/dashboard - Dashboard with nested layout
-- http://localhost:3000/features - Marketing section
+Visit these URLs to see Server Components:
+- http://localhost:3000/products - Database simulation
+- http://localhost:3000/blog - File system reading
+- http://localhost:3000/config - Environment variables
+- http://localhost:3000/weather - External API calls
