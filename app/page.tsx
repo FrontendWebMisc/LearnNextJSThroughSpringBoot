@@ -24,10 +24,10 @@ export default function Home() {
       */}
       <main>
         <div className="bg-gray-50 p-6 rounded-lg mb-8">
-          <h2 className="text-2xl font-semibold mb-4">🖥️ Client Components Features</h2>
+          <h2 className="text-2xl font-semibold mb-4">🔌 API Routes Features</h2>
           <p className="mb-4">
-            This branch demonstrates Next.js Client Components - the interactive JavaScript that runs in the browser.
-            These are exactly like the frontend code that calls your Spring Boot REST APIs for dynamic functionality!
+            This branch demonstrates Next.js API Routes - building REST APIs exactly like your Spring Boot @RestController!
+            Same concepts, same patterns, just in TypeScript instead of Java.
           </p>
           
           {/* 
@@ -37,59 +37,59 @@ export default function Home() {
           */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* Todo Manager Example */}
+            {/* Products CRUD API */}
             <div className="bg-white p-4 rounded border">
-              <h3 className="font-semibold text-lg mb-2">✅ Todo Manager</h3>
+              <h3 className="font-semibold text-lg mb-2">📦 Products API</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Interactive CRUD operations - like POST/DELETE to your APIs
+                Full CRUD REST API - exactly like @RestController
               </p>
               <Link 
-                href="/todo" 
+                href="/api-demo/products" 
                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 inline-block"
               >
-                Manage Todos
+                Test Products API
               </Link>
             </div>
 
-            {/* Shopping Cart Example */}
+            {/* Authentication API */}
             <div className="bg-white p-4 rounded border">
-              <h3 className="font-semibold text-lg mb-2">🛒 Shopping Cart</h3>
+              <h3 className="font-semibold text-lg mb-2">🔐 Authentication</h3>
               <p className="text-sm text-gray-600 mb-3">
-                State management & API calls - like frontend calling REST APIs
+                Login/logout endpoints - like Spring Security controllers
               </p>
               <Link 
-                href="/cart" 
+                href="/api-demo/auth" 
                 className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 inline-block"
               >
-                Shopping Experience
+                Test Auth API
               </Link>
             </div>
 
-            {/* Real-time Chat Example */}
+            {/* Users Database API */}
             <div className="bg-white p-4 rounded border">
-              <h3 className="font-semibold text-lg mb-2">💬 Real-time Chat</h3>
+              <h3 className="font-semibold text-lg mb-2">👥 Users Database</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Live interactions - like WebSocket connections
+                Database operations - like @Repository patterns
               </p>
               <Link 
-                href="/chat" 
+                href="/api-demo/users" 
                 className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 inline-block"
               >
-                Chat Interface
+                Test Users API
               </Link>
             </div>
 
-            {/* Form Handling Example */}
+            {/* File Upload API */}
             <div className="bg-white p-4 rounded border">
-              <h3 className="font-semibold text-lg mb-2">📝 Contact Form</h3>
+              <h3 className="font-semibold text-lg mb-2">📁 File Upload</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Form submissions - like POST requests to backend APIs
+                Multipart file handling - like @RequestParam MultipartFile
               </p>
               <Link 
-                href="/contact" 
+                href="/api-demo/upload" 
                 className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 inline-block"
               >
-                Contact Form
+                Test Upload API
               </Link>
             </div>
           </div>
