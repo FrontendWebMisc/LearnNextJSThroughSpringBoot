@@ -1,79 +1,152 @@
-# Next.js Static Site Generation (SSG) Feature
+# Next.js Incremental Static Regeneration (ISR) Feature
 
-## Perfect for Spring Boot Developers Who Build Documentation & Reports!
-This is like generating static documentation or reports at build time in Spring Boot. SSG pre-renders pages with data, creating super-fast static HTML files.
+## Spring Boot Developers: Think Cached API Responses That Auto-Update!
+This is like Spring Boot's `@Cacheable` with TTL expiry, but for entire HTML pages! ISR serves cached static pages but regenerates them in the background when they expire.
 
-**Your Spring Boot Build-Time Generation:**
+**Your Spring Boot Caching Pattern:**
 ```java
-// Maven/Gradle plugin that generates static docs
-@Component  
-public class DocumentationGenerator {
+@RestController  
+public class ProductController {
     
-    @EventListener(ContextRefreshedEvent.class)
-    public void generateStaticDocs() {
-        // Generate API documentation
-        List<Endpoint> endpoints = reflectionService.scanEndpoints();
-        String html = templateEngine.process("api-docs", endpoints);
-        Files.write(Paths.get("target/docs/api.html"), html.getBytes());
+    @GetMapping("/api/products/{id}")
+    @Cacheable(value = "products", key = "#id")
+    @CacheEvict(value = "products", key = "#id", condition = "@cacheService.isExpired(#id, 60)")
+    public Product getProduct(@PathVariable Long id) {
+        // This runs only when cache is empty or expired
+        return productService.findById(id);
+    }
+    
+    @PostMapping("/api/products/{id}/update")
+    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        Product updated = productService.update(id, product);
         
-        // Generate user manuals  
-        List<Guide> guides = contentService.getAllGuides();
-        guides.forEach(guide -> {
-            String content = markdownProcessor.toHtml(guide.getContent());
-            Files.write(Paths.get("target/docs/" + guide.getId() + ".html"), 
-                       content.getBytes());
-        });
+        // Invalidate cache to force fresh data
+        cacheManager.evict("products", id);
+        return updated;
+    }
+}
+
+@Component
+public class CacheService {
+    public boolean isExpired(Long id, int ttlSeconds) {
+        // Custom logic to check if cache entry is older than TTL
+        return getCacheAge(id) > ttlSeconds;
     }
 }
 ```
 
-**Next.js Static Generation (same concept!):**
+**Next.js ISR (Same Pattern, But for Full Pages!):**
 ```typescript
-// This generates static HTML at BUILD TIME
+// Product page that regenerates every 60 seconds
 export async function generateStaticParams() {
-    // Like scanning your data at build time
-    const posts = await getBlogPosts();
-    return posts.map(post => ({ slug: post.slug }));
+    // Pre-generate popular products at build time
+    const popularProducts = await getPopularProducts();
+    return popularProducts.map(product => ({ id: product.id }));
 }
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-    // This runs at BUILD TIME, not request time
-    const post = await getBlogPostBySlug(params.slug);
+export default async function ProductPage({ params }: { params: { id: string } }) {
+    // This runs at build time AND when cache expires
+    const product = await getProduct(params.id);
     
-    // Generated as static HTML file
-    return <div>{post.content}</div>;
+    return (
+        <div>
+            <h1>{product.name}</h1>
+            <p>{product.description}</p>
+            <p>Last updated: {new Date().toISOString()}</p>
+        </div>
+    );
+}
+
+// ISR Configuration - Like @Cacheable TTL
+export const revalidate = 60; // Regenerate every 60 seconds (like cache TTL)
+
+// For API routes with ISR
+export async function GET(request: Request) {
+    const product = await getProduct(id);
+    
+    return Response.json(product, {
+        headers: {
+            'Cache-Control': 's-maxage=60, stale-while-revalidate=59'
+        }
+    });
 }
 ```
 
 ## Key Concepts for Spring Boot Developers
 
-### 1. Build-Time vs Runtime
-- **SSG** - Generate pages at build time (like Maven/Gradle build plugins)
-- **SSR** - Generate pages at request time (like your controllers)
-- **Static Export** - Pure HTML files (like generated documentation)
+### 1. ISR = Smart Caching Strategy
+- **Static at build** - Like pre-warming your cache
+- **Serve stale** - Like serving cached data while refreshing
+- **Regenerate in background** - Like async cache refresh
+- **On-demand revalidation** - Like manual cache eviction
 
-### 2. Performance Benefits
-- **CDN-friendly** - Static files served from edge locations
-- **Lightning fast** - No server processing needed
-- **SEO optimized** - Crawlers get pre-rendered HTML
-- **Cost effective** - Host on any static file server
+### 2. ISR vs Spring Boot Caching
+| Spring Boot Cache | Next.js ISR |
+|------------------|-------------|
+| `@Cacheable` method | `revalidate` export |
+| Cache TTL | `revalidate` seconds |
+| `@CacheEvict` | On-demand revalidation |
+| Background refresh | Background regeneration |
+| Database → Cache | API → Static HTML |
+
+### 3. Revalidation Strategies
+```typescript
+// Time-based (like TTL)
+export const revalidate = 3600; // 1 hour
+
+// On-demand (like @CacheEvict)
+import { revalidatePath, revalidateTag } from 'next/cache'
+
+export async function POST(request: Request) {
+    const { productId } = await request.json();
+    
+    // Update product in database
+    await updateProduct(productId);
+    
+    // Invalidate specific page (like cache eviction)
+    revalidatePath(`/products/${productId}`);
+    
+    // Or invalidate by tag (like clearing multiple cache entries)
+    revalidateTag('products');
+    
+    return Response.json({ revalidated: true });
+}
+```
 
 ## Examples in This Branch
 
-1. **Blog System** - `/blog/[slug]` (Static blog posts like documentation)
-2. **Product Catalog** - `/catalog/[category]` (E-commerce pages)
-3. **Documentation** - `/docs/[section]` (API documentation generation)
-4. **Reports Dashboard** - `/reports` (Business intelligence reports)
+1. **Product Catalog** - `/products/[id]` (ISR with 60s revalidation)
+2. **News Articles** - `/news/[slug]` (Background updates for fresh content)
+3. **User Profiles** - `/users/[id]` (On-demand revalidation)
+4. **E-commerce** - `/shop/[category]` (Hybrid caching strategy)
+5. **Dashboard** - `/dashboard/stats` (Real-time data with ISR)
 
 ## Getting Started
 
-Build static pages:
+Build with ISR:
 ```bash
 npm run build
+npm run start # Production mode required for ISR
 ```
 
-Visit these statically generated pages:
-- /blog/nextjs-vs-spring-boot - Blog post (static HTML)
-- /catalog/electronics - Product category (pre-rendered)
-- /docs/api-reference - Documentation (build-time generated)
-- /reports/sales-2024 - Business report (static dashboard)
+Test ISR behavior:
+- http://localhost:3000/products/1 - Product with 60s revalidation
+- http://localhost:3000/news/latest - News with background updates
+- http://localhost:3000/users/123 - User profile with on-demand revalidation
+- http://localhost:3000/shop/electronics - Category with hybrid caching
+
+## Spring Boot Developer Benefits
+
+1. **No cache management code** - ISR handles TTL and eviction automatically
+2. **Better performance** - Serve static HTML instead of processing requests
+3. **Automatic scaling** - CDN-friendly static files
+4. **Background updates** - Users get fast responses while data refreshes
+5. **Simple configuration** - Just set `revalidate` number (like cache TTL)
+
+## ISR Best Practices (From Spring Boot Perspective)
+
+1. **Choose TTL wisely** - Like setting cache expiry in `@Cacheable`
+2. **Use tags** - Group related pages for batch invalidation
+3. **Monitor cache hits** - ISR analytics like Spring cache statistics
+4. **Combine strategies** - Some pages ISR, others real-time (like mixed caching)
+5. **Handle failures** - Fallback to stale content (like cache-aside pattern)
