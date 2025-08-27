@@ -1,79 +1,150 @@
-# Next.js Static Site Generation (SSG) Feature
+# Next.js Image Optimization Feature
 
-## Perfect for Spring Boot Developers Who Build Documentation & Reports!
-This is like generating static documentation or reports at build time in Spring Boot. SSG pre-renders pages with data, creating super-fast static HTML files.
+## Spring Boot Developers: Think Static Resources + CDN!
+This is like Spring Boot's static resource handling but with automatic optimization, resizing, and CDN distribution - perfect for modern web applications!
 
-**Your Spring Boot Build-Time Generation:**
+**Your Spring Boot Static Resource Setup:**
 ```java
-// Maven/Gradle plugin that generates static docs
-@Component  
-public class DocumentationGenerator {
+@Configuration
+public class StaticResourceConfig implements WebMvcConfigurer {
     
-    @EventListener(ContextRefreshedEvent.class)
-    public void generateStaticDocs() {
-        // Generate API documentation
-        List<Endpoint> endpoints = reflectionService.scanEndpoints();
-        String html = templateEngine.process("api-docs", endpoints);
-        Files.write(Paths.get("target/docs/api.html"), html.getBytes());
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Serve static images
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/images/")
+                .setCacheControl(CacheControl.maxAge(Duration.ofDays(30)));
+                
+        // Custom image processing endpoint
+        registry.addResourceHandler("/optimized-images/**")
+                .addResourceLocations("classpath:/static/optimized/");
+    }
+}
+
+@RestController
+public class ImageController {
+    
+    @GetMapping("/api/image/{filename}")
+    public ResponseEntity<byte[]> getOptimizedImage(
+            @PathVariable String filename,
+            @RequestParam(defaultValue = "800") int width,
+            @RequestParam(defaultValue = "600") int height) {
         
-        // Generate user manuals  
-        List<Guide> guides = contentService.getAllGuides();
-        guides.forEach(guide -> {
-            String content = markdownProcessor.toHtml(guide.getContent());
-            Files.write(Paths.get("target/docs/" + guide.getId() + ".html"), 
-                       content.getBytes());
-        });
+        // Manual image processing
+        BufferedImage original = ImageIO.read(new File("images/" + filename));
+        BufferedImage resized = resizeImage(original, width, height);
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(imageToBytes(resized));
     }
 }
 ```
 
-**Next.js Static Generation (same concept!):**
+**Next.js Image Component (Automatic Optimization!):**
 ```typescript
-// This generates static HTML at BUILD TIME
-export async function generateStaticParams() {
-    // Like scanning your data at build time
-    const posts = await getBlogPosts();
-    return posts.map(post => ({ slug: post.slug }));
-}
+import Image from 'next/image'
 
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-    // This runs at BUILD TIME, not request time
-    const post = await getBlogPostBySlug(params.slug);
-    
-    // Generated as static HTML file
-    return <div>{post.content}</div>;
+export default function ProductGallery() {
+    return (
+        <div>
+            {/* Automatic optimization, lazy loading, and responsive sizing */}
+            <Image
+                src="/images/product-hero.jpg"
+                alt="Product Hero"
+                width={800}
+                height={600}
+                priority={true} // Load immediately for above-fold images
+                placeholder="blur" // Show blur while loading
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8A0XGMThqWMZhVmMa/fVCjqfMOdl8ePzKhoPeHMOel8WPzKhoPWDMOdl8ePzJwLT"
+                style={{ objectFit: 'cover' }}
+            />
+            
+            {/* Different sizes for different screen sizes */}
+            <Image
+                src="/images/product-thumbnail.jpg"
+                alt="Product Thumbnail"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                style={{ objectFit: 'cover' }}
+            />
+            
+            {/* External images with domains configuration */}
+            <Image
+                src="https://api.yourspring.boot/images/user-avatar.jpg"
+                alt="User Avatar"
+                width={100}
+                height={100}
+                className="rounded-full"
+            />
+        </div>
+    )
 }
 ```
 
 ## Key Concepts for Spring Boot Developers
 
-### 1. Build-Time vs Runtime
-- **SSG** - Generate pages at build time (like Maven/Gradle build plugins)
-- **SSR** - Generate pages at request time (like your controllers)
-- **Static Export** - Pure HTML files (like generated documentation)
+### 1. Automatic Image Processing (No More Manual Work!)
+- **Automatic resizing** - No need for ImageIO and manual processing
+- **Format optimization** - WebP for modern browsers, JPEG/PNG fallback
+- **Quality optimization** - Automatic compression based on content
+- **Lazy loading** - Images load only when they enter viewport
 
-### 2. Performance Benefits
-- **CDN-friendly** - Static files served from edge locations
-- **Lightning fast** - No server processing needed
-- **SEO optimized** - Crawlers get pre-rendered HTML
-- **Cost effective** - Host on any static file server
+### 2. Performance Benefits vs Manual Spring Boot Setup
+| Spring Boot Manual | Next.js Image Component |
+|-------------------|-------------------------|
+| Manual `BufferedImage` processing | Automatic optimization |
+| Custom caching headers | Built-in CDN caching |
+| Manual responsive handling | Automatic `sizes` attribute |
+| No lazy loading | Built-in lazy loading |
+| Single format | Multiple format support |
+
+### 3. Configuration (Like application.properties)
+```javascript
+// next.config.js - Like your application.properties
+module.exports = {
+    images: {
+        // External domains (like CORS configuration)
+        domains: ['api.yourspring.boot', 'cdn.example.com'],
+        
+        // Image sizes for optimization
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+        
+        // Formats to generate
+        formats: ['image/webp'],
+        
+        // Quality settings
+        minimumCacheTTL: 60,
+    }
+}
+```
 
 ## Examples in This Branch
 
-1. **Blog System** - `/blog/[slug]` (Static blog posts like documentation)
-2. **Product Catalog** - `/catalog/[category]` (E-commerce pages)
-3. **Documentation** - `/docs/[section]` (API documentation generation)
-4. **Reports Dashboard** - `/reports` (Business intelligence reports)
+1. **Product Gallery** - `/app/gallery` (Optimized product images)
+2. **User Profiles** - `/app/profiles` (Avatar optimization and lazy loading)
+3. **Blog Images** - `/app/blog` (Responsive images in content)
+4. **Hero Sections** - `/app/hero` (Priority loading for above-fold images)
+5. **Image API** - `/app/api/image` (Custom image processing endpoint)
 
 ## Getting Started
 
-Build static pages:
+Run the development server:
 ```bash
-npm run build
+npm run dev
 ```
 
-Visit these statically generated pages:
-- /blog/nextjs-vs-spring-boot - Blog post (static HTML)
-- /catalog/electronics - Product category (pre-rendered)
-- /docs/api-reference - Documentation (build-time generated)
-- /reports/sales-2024 - Business report (static dashboard)
+See optimized images in action:
+- http://localhost:3000/gallery - Product image gallery
+- http://localhost:3000/profiles - User avatar optimization
+- http://localhost:3000/blog/image-post - Blog with optimized images
+- http://localhost:3000/hero - Hero section with priority loading
+
+## Spring Boot Developer Benefits
+
+1. **No manual ImageIO** - Automatic processing replaces your custom code
+2. **Built-in CDN** - No need for CloudFront/S3 setup
+3. **Responsive by default** - Automatic sizing for different devices  
+4. **Performance optimized** - WebP, lazy loading, and caching built-in
+5. **Simple API** - Just use `<Image>` component instead of complex controllers
