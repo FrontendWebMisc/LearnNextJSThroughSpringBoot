@@ -1,103 +1,143 @@
-import Image from "next/image";
+import Link from "next/link";
 
+// This is the HOME PAGE component - equivalent to @GetMapping("/") in Spring Boot
+// In Next.js, this file at app/page.tsx automatically handles GET requests to "/"
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="max-w-4xl mx-auto p-8">
+      {/* 
+        HEADER SECTION 
+        Similar to how you might have a header in a Thymeleaf template
+      */}
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 text-blue-600">
+          Next.js App Router Demo
+        </h1>
+        <p className="text-lg text-gray-600">
+          Learn Next.js routing concepts coming from Spring Boot background
+        </p>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* 
+        MAIN CONTENT SECTION
+        Think of this as the main content you'd return in a Spring Boot controller
+      */}
+      <main>
+        <div className="bg-gray-50 p-6 rounded-lg mb-8">
+          <h2 className="text-2xl font-semibold mb-4">🚀 App Router Features</h2>
+          <p className="mb-4">
+            This branch demonstrates Next.js App Router - the new file-based routing system.
+            Each folder in the `app` directory represents a route segment.
+          </p>
+          
+          {/* 
+            NAVIGATION LINKS
+            Similar to how you'd create navigation in Spring Boot templates
+            Link component provides client-side navigation (faster than page reloads)
+          */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Basic Route Example */}
+            <div className="bg-white p-4 rounded border">
+              <h3 className="font-semibold text-lg mb-2">📄 Basic Route</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Static route - like @GetMapping("/about")
+              </p>
+              <Link 
+                href="/about" 
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 inline-block"
+              >
+                Visit About Page
+              </Link>
+            </div>
+
+            {/* Dynamic Route Example */}
+            <div className="bg-white p-4 rounded border">
+              <h3 className="font-semibold text-lg mb-2">🔗 Dynamic Route</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Dynamic parameter - like @GetMapping("/users/{id}")
+              </p>
+              <Link 
+                href="/users/123" 
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 inline-block"
+              >
+                Visit User Profile
+              </Link>
+            </div>
+
+            {/* Nested Layout Example */}
+            <div className="bg-white p-4 rounded border">
+              <h3 className="font-semibold text-lg mb-2">📱 Dashboard Layout</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Nested layout with sidebar - like template inheritance
+              </p>
+              <Link 
+                href="/dashboard" 
+                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 inline-block"
+              >
+                View Dashboard
+              </Link>
+            </div>
+
+            {/* Route Groups Example */}
+            <div className="bg-white p-4 rounded border">
+              <h3 className="font-semibold text-lg mb-2">📦 Route Groups</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Organized routes without affecting URL structure
+              </p>
+              <Link 
+                href="/features" 
+                className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 inline-block"
+              >
+                Marketing Features
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* 
+          SPRING BOOT COMPARISON SECTION
+          Educational content to help understand the concepts
+        */}
+        <div className="bg-blue-50 p-6 rounded-lg">
+          <h2 className="text-2xl font-semibold mb-4">🔄 Spring Boot vs Next.js</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-2 text-red-600">Spring Boot Way</h3>
+              <pre className="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto">
+{`@RestController
+public class AppController {
+  
+  @GetMapping("/")
+  public String home() {
+    return "index";
+  }
+  
+  @GetMapping("/users/{id}")
+  public String user(@PathVariable String id) {
+    return "user-profile";
+  }
+}`}
+              </pre>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-2 text-blue-600">Next.js App Router</h3>
+              <pre className="bg-gray-800 text-green-400 p-3 rounded text-sm overflow-x-auto">
+{`app/
+  page.tsx              // GET /
+  users/
+    [id]/
+      page.tsx          // GET /users/123
+      
+// File structure = Routes
+// No controller needed!`}
+              </pre>
+            </div>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
