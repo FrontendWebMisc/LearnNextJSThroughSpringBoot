@@ -1,79 +1,148 @@
-# Next.js Static Site Generation (SSG) Feature
+# Next.js Server-Side Rendering (SSR) Feature
 
-## Perfect for Spring Boot Developers Who Build Documentation & Reports!
-This is like generating static documentation or reports at build time in Spring Boot. SSG pre-renders pages with data, creating super-fast static HTML files.
+## Spring Boot Developers: This is Your Comfort Zone!
+Server-Side Rendering in Next.js works exactly like your Spring Boot controllers - processing requests on the server and returning HTML!
 
-**Your Spring Boot Build-Time Generation:**
+**Your Spring Boot Controller Pattern:**
 ```java
-// Maven/Gradle plugin that generates static docs
-@Component  
-public class DocumentationGenerator {
+@Controller
+public class ProductController {
     
-    @EventListener(ContextRefreshedEvent.class)
-    public void generateStaticDocs() {
-        // Generate API documentation
-        List<Endpoint> endpoints = reflectionService.scanEndpoints();
-        String html = templateEngine.process("api-docs", endpoints);
-        Files.write(Paths.get("target/docs/api.html"), html.getBytes());
+    @Autowired
+    private ProductService productService;
+    
+    @GetMapping("/products/{id}")
+    public String getProduct(@PathVariable Long id, Model model) {
+        // This runs on SERVER for each request
+        Product product = productService.findById(id);
         
-        // Generate user manuals  
-        List<Guide> guides = contentService.getAllGuides();
-        guides.forEach(guide -> {
-            String content = markdownProcessor.toHtml(guide.getContent());
-            Files.write(Paths.get("target/docs/" + guide.getId() + ".html"), 
-                       content.getBytes());
-        });
+        if (product == null) {
+            throw new ProductNotFoundException("Product not found");
+        }
+        
+        // Add data to model for template rendering
+        model.addAttribute("product", product);
+        model.addAttribute("relatedProducts", productService.findRelated(id));
+        model.addAttribute("currentTime", new Date());
+        
+        return "product-details"; // Thymeleaf template
     }
 }
 ```
 
-**Next.js Static Generation (same concept!):**
+**Next.js SSR (Identical Server Processing!):**
 ```typescript
-// This generates static HTML at BUILD TIME
-export async function generateStaticParams() {
-    // Like scanning your data at build time
-    const posts = await getBlogPosts();
-    return posts.map(post => ({ slug: post.slug }));
-}
-
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-    // This runs at BUILD TIME, not request time
-    const post = await getBlogPostBySlug(params.slug);
+// This runs on SERVER for each request - just like your Spring Boot controller!
+export default async function ProductPage({ params }: { params: { id: string } }) {
+    // Server-side data fetching (like @Service call)
+    const product = await productService.findById(params.id);
     
-    // Generated as static HTML file
-    return <div>{post.content}</div>;
+    if (!product) {
+        throw new Error('Product not found');
+    }
+    
+    // Fetch additional data (like multiple service calls)
+    const relatedProducts = await productService.findRelated(params.id);
+    const currentTime = new Date();
+    
+    // Return JSX (like Thymeleaf template rendering)
+    return (
+        <div>
+            <h1>{product.name}</h1>
+            <p>{product.description}</p>
+            <p>Loaded at: {currentTime.toISOString()}</p>
+            <RelatedProducts products={relatedProducts} />
+        </div>
+    );
 }
 ```
 
 ## Key Concepts for Spring Boot Developers
 
-### 1. Build-Time vs Runtime
-- **SSG** - Generate pages at build time (like Maven/Gradle build plugins)
-- **SSR** - Generate pages at request time (like your controllers)
-- **Static Export** - Pure HTML files (like generated documentation)
+### 1. Request-Time Processing (Exactly Like Spring Boot!)
+- **Every request triggers server processing** (like controller methods)
+- **Real-time data fetching** (like @Service calls)
+- **Dynamic content generation** (like model population)
+- **Server-side HTML rendering** (like Thymeleaf processing)
 
-### 2. Performance Benefits
-- **CDN-friendly** - Static files served from edge locations
-- **Lightning fast** - No server processing needed
-- **SEO optimized** - Crawlers get pre-rendered HTML
-- **Cost effective** - Host on any static file server
+### 2. SSR vs Spring Boot Controllers
+| Spring Boot Controller | Next.js SSR |
+|------------------------|-------------|
+| `@GetMapping("/path")` | `app/path/page.tsx` |
+| `Model model` | Component props |
+| `@PathVariable` | `params` object |
+| `@RequestParam` | `searchParams` |
+| Service calls | Direct async calls |
+| Thymeleaf template | JSX component |
+
+### 3. When to Use SSR (Like Spring Boot MVC)
+- **Dynamic content** - Data changes frequently
+- **User-specific content** - Personalized pages
+- **Real-time data** - Stock prices, news feeds
+- **SEO + freshness** - Search-friendly with current data
 
 ## Examples in This Branch
 
-1. **Blog System** - `/blog/[slug]` (Static blog posts like documentation)
-2. **Product Catalog** - `/catalog/[category]` (E-commerce pages)
-3. **Documentation** - `/docs/[section]` (API documentation generation)
-4. **Reports Dashboard** - `/reports` (Business intelligence reports)
+1. **Dynamic Blog** - `/blog` (Real-time content like CMS)
+2. **Live Data Demo** - `/ssr-demo` (Server-rendered with current timestamp)
+3. **User-Specific Content** - Server-side personalization
+4. **Database Integration** - Fresh data on every request
 
 ## Getting Started
 
-Build static pages:
+Run the development server:
 ```bash
-npm run build
+npm run dev
 ```
 
-Visit these statically generated pages:
-- /blog/nextjs-vs-spring-boot - Blog post (static HTML)
-- /catalog/electronics - Product category (pre-rendered)
-- /docs/api-reference - Documentation (build-time generated)
-- /reports/sales-2024 - Business report (static dashboard)
+Experience server-side rendering:
+- http://localhost:3000/ssr-demo - Live timestamp on each refresh
+- http://localhost:3000/blog - Dynamic blog content
+- http://localhost:3000/blog/server-components-guide - Individual post rendering
+
+## Spring Boot Developer Benefits
+
+1. **Familiar execution model** - Code runs on server per request
+2. **Real-time data** - Always fresh content (like controller responses)
+3. **SEO optimized** - Pre-rendered HTML for search engines
+4. **Error handling** - Server-side exception handling like @ExceptionHandler
+5. **Security** - Sensitive operations stay on server
+
+## SSR Performance Considerations
+
+Just like optimizing Spring Boot controllers:
+
+**Spring Boot Optimization:**
+```java
+@Cacheable("products")
+public Product findById(Long id) {
+    return productRepository.findById(id);
+}
+```
+
+**Next.js SSR Optimization:**
+```typescript
+import { unstable_cache } from 'next/cache';
+
+const getCachedProduct = unstable_cache(
+    async (id: string) => productService.findById(id),
+    ['product'],
+    { revalidate: 300 } // Cache for 5 minutes
+);
+```
+
+## Migration from Spring Boot MVC
+
+If you're using Spring Boot MVC with Thymeleaf:
+
+**Before (Spring Boot + Thymeleaf):**
+- Controller → Service → Repository → Template
+- Model attributes → Template variables  
+- Server-side form handling
+
+**After (Next.js SSR):**
+- Page Component → Service calls → Database → JSX
+- Async data → Component props
+- Server-side form actions
+
+Same server-side execution, modern React UI!
