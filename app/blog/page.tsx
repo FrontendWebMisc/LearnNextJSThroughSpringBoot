@@ -228,7 +228,7 @@ export default async function BlogPage() {
           <div className="bg-white p-4 rounded border">
             <h3 className="font-semibold mb-2">Current Project Structure:</h3>
             <pre className="text-sm text-gray-700">
-{`my-app/
+{`LearnNextJSThroughSpringBoot/
 ├── app/
 │   ├── blog/
 │   │   └── page.tsx          ← This Server Component
