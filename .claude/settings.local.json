@@ -4,7 +4,9 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(robocopy:*)"
+      "Bash(robocopy:*)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\blog\\[slug]/**)"
     ],
     "deny": [],
     "ask": [],
