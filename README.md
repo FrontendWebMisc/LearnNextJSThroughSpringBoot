@@ -130,10 +130,16 @@ npm run start # Production mode required for ISR
 ```
 
 Test ISR behavior:
-- http://localhost:3000/products/1 - Product with 60s revalidation
-- http://localhost:3000/news/latest - News with background updates
+- http://localhost:3000/products/1 - Product details with 60s revalidation
+- http://localhost:3000/products/2 - Another product example  
+- http://localhost:3000/products/3 - Third product example
+- http://localhost:3000/news/latest - Breaking news with 5-minute updates
+- http://localhost:3000/news/spring-boot-nextjs-guide - Tutorial article
 - http://localhost:3000/users/123 - User profile with on-demand revalidation
-- http://localhost:3000/shop/electronics - Category with hybrid caching
+- http://localhost:3000/shop/electronics - Electronics category (30-min cache)
+- http://localhost:3000/shop/clothing - Clothing category  
+- http://localhost:3000/shop/home - Home & Garden category
+- http://localhost:3000/dashboard/stats - Analytics dashboard (2-min cache)
 
 ## Spring Boot Developer Benefits
 
