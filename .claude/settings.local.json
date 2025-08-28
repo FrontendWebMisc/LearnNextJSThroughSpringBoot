@@ -3,7 +3,15 @@
     "allow": [
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\todo/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\products/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\api/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\users\\[id]\\profile/**)"
     ],
     "deny": [],
     "ask": []
