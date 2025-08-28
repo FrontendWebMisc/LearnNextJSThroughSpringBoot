@@ -20,7 +20,8 @@ export async function generateStaticParams() {
     'nextjs-vs-spring-boot',
     'server-components-guide', 
     'api-routes-tutorial',
-    'static-generation-explained'
+    'static-generation-explained',
+    'image-post'
   ];
   
   return blogPosts.map(slug => ({
@@ -235,6 +236,134 @@ Perfect for content that doesn't change frequently - just like how you might gen
       publishedDate: '2024-03-01',
       author: 'DevOps Engineer',
       tags: ['ssg', 'static-generation', 'performance']
+    },
+    'image-post': {
+      slug: 'image-post',
+      title: 'Next.js Image Optimization: A Spring Boot Developer\'s Guide',
+      content: `
+# Next.js Image Optimization: A Spring Boot Developer's Guide
+
+Coming from Spring Boot, you're used to handling image processing with BufferedImage, ImageIO, and custom endpoints. Next.js takes a completely different approach that eliminates most of this manual work.
+
+## The Problem with Manual Image Processing
+
+**Your Spring Boot Image Controller:**
+\`\`\`java
+@RestController
+public class ImageController {
+    @GetMapping("/api/image/{filename}")
+    public ResponseEntity<byte[]> getOptimizedImage(
+        @PathVariable String filename,
+        @RequestParam(defaultValue = "800") int width,
+        @RequestParam(defaultValue = "600") int height
+    ) {
+        BufferedImage original = ImageIO.read(new File("images/" + filename));
+        BufferedImage resized = Scalr.resize(original, width, height);
+        
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(resized, "jpg", baos);
+        
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_JPEG)
+            .body(baos.toByteArray());
+    }
+}
+\`\`\`
+
+## The Next.js Solution
+
+**Just use the Image component:**
+\`\`\`typescript
+import Image from 'next/image'
+
+export default function ProductGallery() {
+    return (
+        <Image
+            src="/products/laptop.jpg"
+            alt="Gaming laptop"
+            width={800}
+            height={600}
+            className="rounded-lg"
+        />
+    );
+}
+\`\`\`
+
+## What Happens Behind the Scenes
+
+1. **Automatic resizing** - Multiple sizes generated automatically
+2. **Format optimization** - WebP for modern browsers, JPEG/PNG fallback  
+3. **Lazy loading** - Images load only when they enter the viewport
+4. **CDN optimization** - Automatic edge caching and compression
+5. **Responsive sizing** - Different images for different screen sizes
+
+## Performance Benefits
+
+**Spring Boot Approach:**
+- Manual BufferedImage operations (CPU intensive)
+- Custom caching headers
+- Single image format
+- No lazy loading
+- Manual responsive handling
+
+**Next.js Approach:**
+- Automatic optimization (handled by framework)
+- Built-in CDN caching
+- Multiple formats (WebP, AVIF, JPEG)
+- Built-in lazy loading
+- Automatic responsive images
+
+## Integration with Your Spring Boot Backend
+
+You can keep your existing Spring Boot API and just return image URLs:
+
+\`\`\`java
+@GetMapping("/api/products/{id}")
+public Product getProduct(@PathVariable Long id) {
+    Product product = productService.findById(id);
+    // Just return the URL, not bytes
+    product.setImageUrl("https://cdn.yoursite.com/products/" + id + ".jpg");
+    return product;
+}
+\`\`\`
+
+Then use it in Next.js:
+\`\`\`typescript
+const product = await fetch('/api/products/123').then(r => r.json());
+
+return (
+    <Image
+        src={product.imageUrl}
+        alt={product.name}
+        width={400}
+        height={300}
+        className="object-cover"
+    />
+);
+\`\`\`
+
+## Configuration
+
+Just like application.properties in Spring Boot, configure Next.js images in next.config.js:
+
+\`\`\`javascript
+module.exports = {
+    images: {
+        domains: ['api.yourspring.boot', 'cdn.example.com'],
+        deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+        imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+        formats: ['image/webp'],
+    }
+}
+\`\`\`
+
+## Conclusion
+
+Next.js Image component replaces hundreds of lines of Spring Boot image processing code with a simple component. You get better performance, automatic optimization, and modern web standards - all without writing any image processing logic!
+      `,
+      publishedDate: '2024-03-05',
+      author: 'Full Stack Developer',
+      tags: ['image-optimization', 'spring-boot', 'performance', 'tutorial']
     }
   };
   
