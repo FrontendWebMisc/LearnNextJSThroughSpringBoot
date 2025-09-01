@@ -11,7 +11,10 @@
       "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
       "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\api/**)",
       "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app/**)",
-      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\users\\[id]\\profile/**)"
+      "Read(C:\\Users\\Deepak\\IdeaProjects\\React\\LearnNextJS\\LearnNextJsThroughSpringBoot\\app\\users\\[id]\\profile/**)",
+      "Bash(git rm:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
