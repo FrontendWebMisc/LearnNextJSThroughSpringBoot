@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import useSWR, { mutate } from 'swr'
+import useSWR, { mutate, useSWRConfig } from 'swr'
 import { apiRequest, retryApiRequest, getErrorMessage, isValidationError, isDuplicateEmailError, isNetworkError } from '../lib/client-error-handler'
 import { ErrorDisplay, FormFieldError, NetworkErrorBanner } from './ErrorComponents'
+import { logger } from '../lib/logger'
 
 interface User {
   id: number
@@ -32,22 +33,81 @@ export default function ClientUserManager() {
     delete: {}
   })
   
-  const { data: users, error, isLoading, mutate: mutateCurrent } = useSWR<User[]>('/api/users', fetcher, {
+  // Use SWR config for advanced cache manipulation
+  const { cache, mutate: globalMutate } = useSWRConfig()
+  
+  const { 
+    data: users, 
+    error, 
+    isLoading, 
+    isValidating,
+    mutate: mutateCurrent 
+  } = useSWR<User[]>('/api/users', fetcher, {
+    // SWR-specific error handling options
     refreshInterval: 5000,
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
-    shouldRetryOnError: true,
+    revalidateIfStale: true,
+    revalidateOnMount: true,
+    
+    // Advanced error handling with SWR
+    shouldRetryOnError: (error) => {
+      logger.debug('SWR shouldRetryOnError check', {
+        error: getErrorMessage(error),
+        statusCode: error?.status,
+        operation: 'swr_should_retry'
+      })
+      return shouldRetry(error)
+    },
+    
     errorRetryCount: 3,
     errorRetryInterval: 1000,
-    onError: (error) => {
-      console.error('SWR Error:', error)
+    
+    // SWR callbacks with logging
+    onError: (error, key) => {
+      logger.error('SWR Component Error', {
+        key,
+        error: getErrorMessage(error),
+        statusCode: error?.status,
+        operation: 'user_list_fetch'
+      })
+      
       if (isNetworkError(error)) {
         setIsOnline(false)
       }
     },
-    onSuccess: () => {
+    
+    onSuccess: (data, key) => {
+      logger.info('SWR Component Success', {
+        key,
+        userCount: data?.length || 0,
+        operation: 'user_list_fetch'
+      })
       setIsOnline(true)
-    }
+    },
+    
+    onLoadingSlow: (key) => {
+      logger.warn('SWR Component Slow Loading', {
+        key,
+        threshold: '3s',
+        operation: 'user_list_fetch'
+      })
+    },
+    
+    // Keep previous data during revalidation
+    keepPreviousData: true,
+    
+    // Fallback data
+    fallbackData: [],
+    
+    // Dedupe interval
+    dedupingInterval: 2000,
+    
+    // Focus throttle
+    focusThrottleInterval: 5000,
+    
+    // Loading timeout
+    loadingTimeout: 3000
   })
 
   // Network status detection
@@ -80,24 +140,64 @@ export default function ClientUserManager() {
     setOperationLoading(prev => ({ ...prev, create: true }))
     setFormError(null)
     
+    const newUserData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      age: parseInt(formData.age)
+    }
+    
+    // Optimistic update with SWR
+    const optimisticUser = {
+      id: Date.now(), // Temporary ID
+      ...newUserData
+    }
+    
+    logger.userAction('create_user_attempt', undefined, {
+      operation: 'user_create',
+      userData: newUserData
+    })
+    
     try {
-      await retryApiRequest(() => 
-        apiRequest('/api/users', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: formData.name.trim(),
-            email: formData.email.trim(),
-            age: parseInt(formData.age)
-          })
-        })
+      // SWR optimistic update
+      await mutateCurrent(
+        async (currentUsers) => {
+          // Add optimistic user to current data
+          const optimisticData = [...(currentUsers || []), optimisticUser]
+          
+          // Perform the actual API call
+          const newUser = await retryApiRequest(() => 
+            apiRequest('/api/users', {
+              method: 'POST',
+              body: JSON.stringify(newUserData)
+            })
+          )
+          
+          // Return updated data with real user
+          return [...(currentUsers || []), newUser]
+        },
+        {
+          optimisticData: [...(users || []), optimisticUser],
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false // Don't revalidate immediately since we just got fresh data
+        }
       )
       
-      // Success - refresh data and clear form
-      await mutateCurrent()
+      logger.userAction('create_user_success', undefined, {
+        operation: 'user_create',
+        userData: newUserData
+      })
+      
+      // Success - clear form
       clearForm()
       
     } catch (error) {
-      console.error('Error creating user:', error)
+      logger.userAction('create_user_error', undefined, {
+        operation: 'user_create',
+        error: getErrorMessage(error),
+        userData: newUserData
+      })
+      
       setFormError(error)
       
       // Show user-friendly error message
@@ -151,27 +251,63 @@ export default function ClientUserManager() {
   }
 
   const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
+    const userToDelete = users?.find(u => u.id === userId)
+    if (!userToDelete) return
+    
+    if (!confirm(`Are you sure you want to delete ${userToDelete.name}?`)) return
 
     setOperationLoading(prev => ({ 
       ...prev, 
       delete: { ...prev.delete, [userId]: true }
     }))
 
+    logger.userAction('delete_user_attempt', undefined, {
+      operation: 'user_delete',
+      userId,
+      userName: userToDelete.name
+    })
+
     try {
-      await retryApiRequest(() =>
-        apiRequest(`/api/users/${userId}`, {
-          method: 'DELETE'
-        })
+      // SWR optimistic update for delete
+      await mutateCurrent(
+        async (currentUsers) => {
+          // Remove user optimistically
+          const filteredUsers = (currentUsers || []).filter(u => u.id !== userId)
+          
+          // Perform the actual API call
+          await retryApiRequest(() =>
+            apiRequest(`/api/users/${userId}`, {
+              method: 'DELETE'
+            })
+          )
+          
+          // Return filtered data
+          return filteredUsers
+        },
+        {
+          optimisticData: (users || []).filter(u => u.id !== userId),
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false
+        }
       )
       
-      // Success - refresh data
-      await mutateCurrent()
+      logger.userAction('delete_user_success', undefined, {
+        operation: 'user_delete',
+        userId,
+        userName: userToDelete.name
+      })
       
     } catch (error) {
-      console.error('Error deleting user:', error)
+      logger.userAction('delete_user_error', undefined, {
+        operation: 'user_delete',
+        error: getErrorMessage(error),
+        userId,
+        userName: userToDelete.name
+      })
+      
       // Show a toast or temporary error message for delete operations
-      alert(`Failed to delete user: ${getErrorMessage(error)}`)
+      alert(`Failed to delete ${userToDelete.name}: ${getErrorMessage(error)}`)
     } finally {
       setOperationLoading(prev => ({ 
         ...prev, 
@@ -319,17 +455,41 @@ export default function ClientUserManager() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-800">
-            Users {isLoading && <span className="text-sm text-gray-500">(Loading...)</span>}
+            Users 
+            {isLoading && <span className="text-sm text-gray-500 ml-2">(Loading...)</span>}
+            {isValidating && !isLoading && <span className="text-sm text-blue-500 ml-2">(Updating...)</span>}
             {!isOnline && <span className="text-sm text-orange-500 ml-2">(Offline)</span>}
+            {users && <span className="text-xs text-gray-400 ml-2">({users.length} total)</span>}
           </h3>
-          <button
-            onClick={handleRetry}
-            disabled={isLoading || !isOnline}
-            className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-          >
-            {isLoading && <span className="animate-spin">⟳</span>}
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRetry}
+              disabled={isLoading || !isOnline}
+              className="px-3 py-1 text-sm bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {(isLoading || isValidating) && <span className="animate-spin">⟳</span>}
+              {isValidating ? 'Updating' : 'Refresh'}
+            </button>
+            
+            {/* SWR Cache Info */}
+            <button
+              onClick={() => {
+                logger.info('SWR Cache Status', {
+                  cacheSize: cache.size,
+                  hasUsersCache: cache.has('/api/users'),
+                  operation: 'cache_debug'
+                })
+                console.log('SWR Cache:', { 
+                  size: cache.size, 
+                  keys: Array.from(cache.keys()) 
+                })
+              }}
+              className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200"
+              title="Debug: Log SWR cache info"
+            >
+              🔍 Cache
+            </button>
+          </div>
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
