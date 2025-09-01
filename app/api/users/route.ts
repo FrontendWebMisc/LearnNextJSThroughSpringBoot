@@ -1,4 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { withErrorHandling, parseJSONSafely, validateContentType } from '../../lib/api-handler'
+import { ApiError, ErrorCode } from '../../lib/errors'
+import { Validator, userValidationSchema } from '../../lib/validation'
 
 export interface User {
   id: number
@@ -15,22 +18,64 @@ let users: User[] = [
 
 let nextId = 4
 
-export async function GET() {
-  await new Promise(resolve => setTimeout(resolve, 500))
-  return NextResponse.json(users)
-}
+export const GET = withErrorHandling(async (request, context) => {
+  // Simulate potential database error (5% chance)
+  if (Math.random() < 0.05) {
+    throw ApiError.internal('Database connection failed', { 
+      operation: 'fetch_users',
+      attempted_at: new Date().toISOString()
+    })
+  }
 
-export async function POST(request: NextRequest) {
+  // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 500))
   
-  const body = await request.json()
+  return users
+})
+
+export const POST = withErrorHandling(async (request, context) => {
+  validateContentType(request, 'application/json')
+  
+  const body = await parseJSONSafely(request)
+  
+  // Validate input data
+  const validatedData = Validator.validate(body, userValidationSchema)
+  
+  // Check for duplicate email
+  const existingUser = users.find(user => 
+    user.email.toLowerCase() === validatedData.email.toLowerCase()
+  )
+  
+  if (existingUser) {
+    throw new ApiError(
+      ErrorCode.DUPLICATE_EMAIL,
+      'A user with this email already exists',
+      409,
+      { 
+        conflictingEmail: validatedData.email,
+        existingUserId: existingUser.id 
+      }
+    )
+  }
+
+  // Simulate potential database error (3% chance)
+  if (Math.random() < 0.03) {
+    throw ApiError.internal('Failed to save user to database', {
+      operation: 'create_user',
+      userData: { ...validatedData, id: nextId }
+    })
+  }
+
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500))
+  
   const newUser: User = {
     id: nextId++,
-    name: body.name,
-    email: body.email,
-    age: body.age
+    name: validatedData.name.trim(),
+    email: validatedData.email.toLowerCase().trim(),
+    age: Number(validatedData.age)
   }
   
   users.push(newUser)
-  return NextResponse.json(newUser, { status: 201 })
-}
+  return newUser
+})
