@@ -94,6 +94,22 @@ export default function UserManager() {
 - **Client Components** - Like JavaScript in JSPs (run in browser)
 - **SWR Integration** - Perfect for client-side data management
 
+## ⚠️ **IMPORTANT: SWR Scope & Limitations**
+
+> ### **SWR error handling only applies to client-side `GET` requests made using SWR.**
+
+* SWR is **not meant for server-side rendering (SSR), static generation (SSG), or React Server Components**.
+* It's also **not designed for POST/PUT/DELETE** (writes).
+* Think of it as:
+
+  > *"If I'm fetching data on the **client** with a `GET` request using SWR, I get built-in caching, retries, and error handling."*
+
+**For everything else** (SSR, RSC, writes), including error handling, handle it differently (server-side or custom logic).
+
+📖 **See [SWR-LIMITATIONS.md](./SWR-LIMITATIONS.md) for detailed scenarios where SWR is not suitable and recommended alternatives.**
+
+---
+
 ## Features Demonstrated
 
 ### Server-Side Component (`ServerUserManager`)
